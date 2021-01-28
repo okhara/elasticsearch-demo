@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using System;
+using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 
@@ -40,6 +41,11 @@ namespace PrimitiveApi
         public static Guid? GetIdFromRouteValues(this HttpRequest request)
         {
             return request.RouteValues.TryGetValue("id", out var value) && value is string str && Guid.TryParse(str, out var id) ? id : default(Guid?);
+        }
+
+        public static string GetValueFromQueryString(this HttpRequest request, string key)
+        {
+            return request.Query.TryGetValue(key, out var values) ? values.Where(v => !string.IsNullOrWhiteSpace(v)).FirstOrDefault() : null;
         }
     }
 }

@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Nest;
-using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
@@ -21,9 +20,23 @@ namespace PrimitiveApi
 
         public async Task GetProducts(HttpContext context)
         {
+            var matchQuery = new MatchQuery
+            {
+                Field = "name",
+                Query = context.Request.GetValueFromQueryString("term"),
+                Fuzziness = Fuzziness.Auto
+            };
+
+            var rangeQuery = new NumericRangeQuery
+            {
+                Field = "price",
+                GreaterThanOrEqualTo = double.TryParse(context.Request.GetValueFromQueryString("pricefrom"), out var from) ? from : (double?)null,
+                LessThan = double.TryParse(context.Request.GetValueFromQueryString("priceto"), out var to) ? to : (double?)null
+            };
+
             var request = new SearchRequest(_productsIndex)
             {
-                Query = new MatchAllQuery()
+                Query = matchQuery && +rangeQuery
             };
 
             var response = await _elasticClient.SearchAsync<Product>(request);
